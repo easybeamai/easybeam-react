@@ -12,7 +12,7 @@ The Easybeam SDK for React provides a seamless integration with the Easybeam AI 
 - Make non-streaming requests to portals and workflows
 - Handle user reviews for chat interactions
 - TypeScript support for improved developer experience
-- Built-in error handling and event management 
+- Built-in error handling and event management
 
 ## Installation
 
