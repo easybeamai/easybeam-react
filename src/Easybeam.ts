@@ -33,8 +33,8 @@ export interface EasybeamService {
     filledVariables: FilledVariables,
     messages: ChatMessage[],
     onNewResponse: (newMessage: PortalResponse) => void,
-    onClose: () => void,
-    onError: (error: Error) => void
+    onClose?: () => void,
+    onError?: (error: Error) => void
   ): Promise<void>;
 
   getPortal(
@@ -50,8 +50,8 @@ export interface EasybeamService {
     filledVariables: FilledVariables,
     messages: ChatMessage[],
     onNewResponse: (newMessage: PortalResponse) => void,
-    onClose: () => void,
-    onError: (error: Error) => void
+    onClose?: () => void,
+    onError?: (error: Error) => void
   ): Promise<void>;
 
   getWorkflow(
@@ -106,9 +106,9 @@ export class Easybeam implements EasybeamService {
     url: string,
     method: NetworkMethod,
     body: any,
-    onMessage: (message: string) => void,
-    onClose: () => void,
-    onError: (error: any) => void
+    onMessage: (message: PortalResponse) => void,
+    onClose?: () => void,
+    onError?: (error: any) => void
   ): Promise<void> {
     const controller = new AbortController();
     const { signal } = controller;
@@ -139,21 +139,55 @@ export class Easybeam implements EasybeamService {
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
+      let buffer = "";
+
+      const handleMessage = (chunk: string) => {
+        buffer += chunk;
+        try {
+          while (buffer.includes("\n\n")) {
+            const end = buffer.indexOf("\n\n");
+            const message = buffer.substring(0, end);
+            buffer = buffer.substring(end + 2);
+
+            if (message.startsWith("data: ")) {
+              const dataJson = message.slice(6);
+              const data = JSON.parse(dataJson);
+              if (data.error) {
+                throw new Error(
+                  `Stream error: ${data.error} status: ${data.status ?? 0}`
+                );
+              }
+              const portalResponse = data as PortalResponse;
+              onMessage(portalResponse);
+              if (portalResponse.streamFinished) {
+                this.cancelStream();
+              }
+            }
+          }
+        } catch (error) {
+          if (error instanceof Error) {
+            onError?.(error);
+          } else {
+            onError?.(new Error("Unknown json processing error"));
+          }
+        }
+      };
 
       while (true) {
         const { value, done } = await reader.read();
         if (done) {
-          onClose();
+          onClose?.();
           break;
         }
+
         const chunk = decoder.decode(value, { stream: true });
-        onMessage(chunk);
+        handleMessage(chunk);
       }
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
-        onClose();
+        onClose?.();
       } else {
-        onError(error);
+        onError?.(error);
       }
     }
   }
@@ -172,8 +206,8 @@ export class Easybeam implements EasybeamService {
     filledVariables: FilledVariables,
     messages: ChatMessage[],
     onNewResponse: (newMessage: PortalResponse) => void,
-    onClose: () => void,
-    onError: (error: Error) => void
+    onClose?: () => void,
+    onError?: (error: Error) => void
   ): Promise<void> {
     const params = {
       variables: filledVariables,
@@ -182,25 +216,9 @@ export class Easybeam implements EasybeamService {
       userId,
     };
 
-    const handleMessage = (jsonString: string) => {
-      try {
-        const message = JSON.parse(jsonString) as PortalResponse;
-        onNewResponse(message);
-        if (message.streamFinished) {
-          this.cancelStream();
-        }
-      } catch (error) {
-        onError(
-          error instanceof Error
-            ? error
-            : new Error("Unknown JSON processing error")
-        );
-      }
-    };
-
     const url = `${this.baseUrl}/${endpoint}/${id}`;
 
-    await this.sendStream(url, "POST", params, handleMessage, onClose, onError);
+    await this.sendStream(url, "POST", params, onNewResponse, onClose, onError);
   }
 
   private async getEndpoint(
@@ -231,7 +249,7 @@ export class Easybeam implements EasybeamService {
     messages: ChatMessage[],
     onNewResponse: (newMessage: PortalResponse) => void,
     onClose: () => void,
-    onError: (error: Error) => void
+    onError?: (error: Error) => void
   ): Promise<void> {
     await this.streamEndpoint(
       "portal",

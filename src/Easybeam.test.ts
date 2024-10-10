@@ -95,12 +95,12 @@ describe("Easybeam Class Tests", () => {
   });
 
   describe("streamPortal", () => {
-    it("should initiate a streaming connection and handle messages", async () => {
+    it("should initiate a streaming connection and handle SSE messages", async () => {
       const onNewResponse = jest.fn();
       const onClose = jest.fn();
       const onError = jest.fn();
 
-      const mockResponse = {
+      const mockResponse: PortalResponse = {
         newMessage: {
           content: "Test response",
           role: "AI",
@@ -110,12 +110,14 @@ describe("Easybeam Class Tests", () => {
         chatId: "chat-id-1",
       };
 
+      const mockSSEResponse = `data: ${JSON.stringify(mockResponse)}\n\n`;
+
       const mockReadableStream = {
         getReader: jest.fn().mockReturnValue({
           read: jest
             .fn()
             .mockResolvedValueOnce({
-              value: new TextEncoder().encode(JSON.stringify(mockResponse)),
+              value: new TextEncoder().encode(mockSSEResponse),
               done: false,
             })
             .mockResolvedValueOnce({ done: true }),
@@ -162,14 +164,52 @@ describe("Easybeam Class Tests", () => {
       expect(onClose).toHaveBeenCalled();
     });
 
-    it("should handle errors during streaming", async () => {
+    it("should handle multiple SSE messages in a single chunk", async () => {
       const onNewResponse = jest.fn();
       const onClose = jest.fn();
       const onError = jest.fn();
 
-      (global.fetch as jest.Mock).mockRejectedValueOnce(
-        new Error("Network error")
-      );
+      const mockResponse1: PortalResponse = {
+        newMessage: {
+          content: "Test response 1",
+          role: "AI",
+          createdAt: new Date().toISOString(),
+          id: "message-id-2",
+        },
+        chatId: "chat-id-1",
+      };
+
+      const mockResponse2: PortalResponse = {
+        newMessage: {
+          content: "Test response 2",
+          role: "AI",
+          createdAt: new Date().toISOString(),
+          id: "message-id-3",
+        },
+        chatId: "chat-id-1",
+        streamFinished: true,
+      };
+
+      const mockSSEResponse = `data: ${JSON.stringify(
+        mockResponse1
+      )}\n\ndata: ${JSON.stringify(mockResponse2)}\n\n`;
+
+      const mockReadableStream = {
+        getReader: jest.fn().mockReturnValue({
+          read: jest
+            .fn()
+            .mockResolvedValueOnce({
+              value: new TextEncoder().encode(mockSSEResponse),
+              done: false,
+            })
+            .mockResolvedValueOnce({ done: true }),
+        }),
+      };
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        body: mockReadableStream,
+      });
 
       await easybeam.streamPortal(
         portalId,
@@ -181,10 +221,57 @@ describe("Easybeam Class Tests", () => {
         onError
       );
 
-      expect(onError).toHaveBeenCalledWith(expect.any(Error));
+      // Wait for the stream processing to complete
+      await new Promise(process.nextTick);
+
+      expect(onNewResponse).toHaveBeenCalledTimes(2);
+      expect(onNewResponse).toHaveBeenNthCalledWith(1, mockResponse1);
+      expect(onNewResponse).toHaveBeenNthCalledWith(2, mockResponse2);
+      expect(onClose).toHaveBeenCalled();
+    });
+
+    it("should handle errors during streaming", async () => {
+      const onNewResponse = jest.fn();
+      const onClose = jest.fn();
+      const onError = jest.fn();
+
+      const mockErrorResponse = `data: {"error": "Test error", "status": 400}\n\n`;
+
+      const mockReadableStream = {
+        getReader: jest.fn().mockReturnValue({
+          read: jest
+            .fn()
+            .mockResolvedValueOnce({
+              value: new TextEncoder().encode(mockErrorResponse),
+              done: false,
+            })
+            .mockResolvedValueOnce({ done: true }),
+        }),
+      };
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        body: mockReadableStream,
+      });
+
+      await easybeam.streamPortal(
+        portalId,
+        userId,
+        filledVariables,
+        messages,
+        onNewResponse,
+        onClose,
+        onError
+      );
+
+      // Wait for the stream processing to complete
+      await new Promise(process.nextTick);
+
+      expect(onError).toHaveBeenCalledWith(
+        new Error("Stream error: Test error status: 400")
+      );
     });
   });
-
   describe("getWorkflow", () => {
     it("should make a POST request and return PortalResponse", async () => {
       const mockResponse: PortalResponse = {
@@ -244,12 +331,12 @@ describe("Easybeam Class Tests", () => {
   });
 
   describe("streamWorkflow", () => {
-    it("should initiate a streaming connection and handle messages", async () => {
+    it("should initiate a streaming connection and handle SSE messages", async () => {
       const onNewResponse = jest.fn();
       const onClose = jest.fn();
       const onError = jest.fn();
 
-      const mockResponse = {
+      const mockResponse: PortalResponse = {
         newMessage: {
           content: "Workflow stream response",
           role: "AI",
@@ -259,12 +346,14 @@ describe("Easybeam Class Tests", () => {
         chatId: "chat-id-3",
       };
 
+      const mockSSEResponse = `data: ${JSON.stringify(mockResponse)}\n\n`;
+
       const mockReadableStream = {
         getReader: jest.fn().mockReturnValue({
           read: jest
             .fn()
             .mockResolvedValueOnce({
-              value: new TextEncoder().encode(JSON.stringify(mockResponse)),
+              value: new TextEncoder().encode(mockSSEResponse),
               done: false,
             })
             .mockResolvedValueOnce({ done: true }),
@@ -311,7 +400,6 @@ describe("Easybeam Class Tests", () => {
       expect(onClose).toHaveBeenCalled();
     });
   });
-
   describe("review", () => {
     it("should send a POST request for review", async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
