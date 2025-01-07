@@ -13,6 +13,7 @@ The Easybeam SDK for React provides a seamless integration with the Easybeam AI 
 - Handle user reviews for chat interactions
 - TypeScript support for improved developer experience
 - Built-in error handling and event management
+- Secure handling of user secrets for agent interactions
 
 ## Installation
 
@@ -34,7 +35,9 @@ const config: EasyBeamConfig = {
 const easybeam = new Easybeam(config);
 ```
 
-### Streaming a Prompt Response
+### Using Prompts
+
+#### Streaming a Prompt Response
 
 ```typescript
 const promptId = "your-prompt-id";
@@ -66,7 +69,7 @@ easybeam.streamPrompt(
 );
 ```
 
-### Making a Non-Streaming Prompt Request
+#### Making a Non-Streaming Prompt Request
 
 ```typescript
 const response = await easybeam.getPrompt(
@@ -76,6 +79,55 @@ const response = await easybeam.getPrompt(
   messages
 );
 console.log("Prompt response:", response);
+```
+
+### Using Agents
+
+#### Streaming an Agent Response
+
+```typescript
+const agentId = "your-agent-id";
+const userId = "user-123";
+const filledVariables = { language: "english" };
+const userSecrets = { apiKey: "sensitive-api-key" }; // Optional secrets for agent
+const messages = [
+  {
+    content: "Can you help me with data analysis?",
+    role: "USER",
+    createdAt: new Date().toISOString(),
+    id: "1",
+  },
+];
+
+easybeam.streamAgent(
+  agentId,
+  userId,
+  filledVariables,
+  messages,
+  (response) => {
+    console.log("New message:", response.newMessage);
+  },
+  () => {
+    console.log("Stream closed");
+  },
+  (error) => {
+    console.error("Error:", error);
+  },
+  userSecrets // Optional parameter for secure credentials
+);
+```
+
+#### Making a Non-Streaming Agent Request
+
+```typescript
+const response = await easybeam.getAgent(
+  agentId,
+  userId,
+  filledVariables,
+  messages,
+  userSecrets // Optional parameter for secure credentials
+);
+console.log("Agent response:", response);
 ```
 
 ### Submitting a Review
@@ -99,9 +151,25 @@ The main class for interacting with the Easybeam API.
 - `review`: Submit a review for a chat interaction
 - `cancelCurrentStream`: Cancel the current streaming request
 
+### Type Interfaces
+
+```typescript
+interface UserSecrets {
+  [key: string]: string;
+}
+
+interface FilledVariables {
+  [key: string]: string;
+}
+```
+
 ## Error Handling
 
 The SDK provides built-in error handling for network requests and SSE connections. Errors are passed to the `onError` callback in streaming methods and thrown as exceptions in non-streaming methods.
+
+## Security Considerations
+
+When using agents with sensitive credentials or API keys, always pass them through the `userSecrets` parameter. This ensures proper handling of sensitive information and prevents exposure in logs or client-side code.
 
 ## TypeScript Support
 
