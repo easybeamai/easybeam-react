@@ -3,6 +3,6 @@ export type {
   EasyBeamConfig,
   FilledVariables,
   ChatMessage,
-  PortalResponse,
+  ChatResponse,
   EasybeamService,
 } from "./Easybeam";

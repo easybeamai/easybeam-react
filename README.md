@@ -4,12 +4,12 @@
 
 ## Overview
 
-The Easybeam SDK for React provides a seamless integration with the Easybeam AI platform, allowing developers to easily incorporate AI-powered chat functionality into their React applications. This SDK supports both streaming and non-streaming interactions with Easybeam's portals and workflows.
+The Easybeam SDK for React provides a seamless integration with the Easybeam AI platform, allowing developers to easily incorporate AI-powered chat functionality into their React applications. This SDK supports both streaming and non-streaming interactions with Easybeam's prompts and agents.
 
 ## Features
 
-- Stream responses from Easybeam portals and workflows
-- Make non-streaming requests to portals and workflows
+- Stream responses from Easybeam prompts and agents
+- Make non-streaming requests to prompts and agents
 - Handle user reviews for chat interactions
 - TypeScript support for improved developer experience
 - Built-in error handling and event management
@@ -34,10 +34,10 @@ const config: EasyBeamConfig = {
 const easybeam = new Easybeam(config);
 ```
 
-### Streaming a Portal Response
+### Streaming a Prompt Response
 
 ```typescript
-const portalId = "your-portal-id";
+const promptId = "your-prompt-id";
 const userId = "user-123";
 const filledVariables = { key: "value" };
 const messages = [
@@ -49,8 +49,8 @@ const messages = [
   },
 ];
 
-easybeam.streamPortal(
-  portalId,
+easybeam.streamPrompt(
+  promptId,
   userId,
   filledVariables,
   messages,
@@ -66,16 +66,16 @@ easybeam.streamPortal(
 );
 ```
 
-### Making a Non-Streaming Portal Request
+### Making a Non-Streaming Prompt Request
 
 ```typescript
-const response = await easybeam.getPortal(
-  portalId,
+const response = await easybeam.getPrompt(
+  promptId,
   userId,
   filledVariables,
   messages
 );
-console.log("Portal response:", response);
+console.log("Prompt response:", response);
 ```
 
 ### Submitting a Review
@@ -92,10 +92,10 @@ The main class for interacting with the Easybeam API.
 
 #### Methods
 
-- `streamPortal`: Stream responses from an Easybeam portal
-- `getPortal`: Make a non-streaming request to an Easybeam portal
-- `streamWorkflow`: Stream responses from an Easybeam workflow
-- `getWorkflow`: Make a non-streaming request to an Easybeam workflow
+- `streamPrompt`: Stream responses from an Easybeam prompt
+- `getPrompt`: Make a non-streaming request to an Easybeam prompt
+- `streamAgent`: Stream responses from an Easybeam agent
+- `getAgent`: Make a non-streaming request to an Easybeam agent
 - `review`: Submit a review for a chat interaction
 - `cancelCurrentStream`: Cancel the current streaming request
 
