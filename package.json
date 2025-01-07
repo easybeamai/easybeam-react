@@ -1,7 +1,7 @@
 {
   "name": "easybeam-react",
-  "version": "1.0.0",
-  "description": "A React package for interacting with EasyBeam portals, reviews & workflows",
+  "version": "2.0.0",
+  "description": "A React package for interacting with Easybeam agents, prompts & reviews",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {

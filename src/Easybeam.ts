@@ -20,46 +20,46 @@ export interface ChatMessage {
 
 export type ChatRole = "AI" | "USER";
 
-export interface PortalResponse {
+export interface ChatResponse {
   newMessage: ChatMessage;
   chatId: string;
   streamFinished?: boolean;
 }
 
 export interface EasybeamService {
-  streamPortal(
-    portalId: string,
+  streamPrompt(
+    promptId: string,
     userId: string | undefined,
     filledVariables: FilledVariables,
     messages: ChatMessage[],
-    onNewResponse: (newMessage: PortalResponse) => void,
+    onNewResponse: (newMessage: ChatResponse) => void,
     onClose?: () => void,
     onError?: (error: Error) => void
   ): Promise<void>;
 
-  getPortal(
-    portalId: string,
+  getPrompt(
+    promptId: string,
     userId: string | undefined,
     filledVariables: FilledVariables,
     messages: ChatMessage[]
-  ): Promise<PortalResponse>;
+  ): Promise<ChatResponse>;
 
-  streamWorkflow(
-    workflowId: string,
+  streamAgent(
+    agentId: string,
     userId: string | undefined,
     filledVariables: FilledVariables,
     messages: ChatMessage[],
-    onNewResponse: (newMessage: PortalResponse) => void,
+    onNewResponse: (newMessage: ChatResponse) => void,
     onClose?: () => void,
     onError?: (error: Error) => void
   ): Promise<void>;
 
-  getWorkflow(
-    workflowId: string,
+  getAgent(
+    agentId: string,
     userId: string | undefined,
     filledVariables: FilledVariables,
     messages: ChatMessage[]
-  ): Promise<PortalResponse>;
+  ): Promise<ChatResponse>;
 
   review(
     chatId: string,
@@ -106,7 +106,7 @@ export class Easybeam implements EasybeamService {
     url: string,
     method: NetworkMethod,
     body: any,
-    onMessage: (message: PortalResponse) => void,
+    onMessage: (message: ChatResponse) => void,
     onClose?: () => void,
     onError?: (error: any) => void
   ): Promise<void> {
@@ -157,9 +157,9 @@ export class Easybeam implements EasybeamService {
                   `Stream error: ${data.error} status: ${data.status ?? 0}`
                 );
               }
-              const portalResponse = data as PortalResponse;
-              onMessage(portalResponse);
-              if (portalResponse.streamFinished) {
+              const chatResponse = data as ChatResponse;
+              onMessage(chatResponse);
+              if (chatResponse.streamFinished) {
                 this.cancelStream();
               }
             }
@@ -205,7 +205,7 @@ export class Easybeam implements EasybeamService {
     userId: string | undefined,
     filledVariables: FilledVariables,
     messages: ChatMessage[],
-    onNewResponse: (newMessage: PortalResponse) => void,
+    onNewResponse: (newMessage: ChatResponse) => void,
     onClose?: () => void,
     onError?: (error: Error) => void
   ): Promise<void> {
@@ -227,7 +227,7 @@ export class Easybeam implements EasybeamService {
     userId: string | undefined,
     filledVariables: FilledVariables,
     messages: ChatMessage[]
-  ): Promise<PortalResponse> {
+  ): Promise<ChatResponse> {
     const params = {
       variables: filledVariables,
       messages,
@@ -239,21 +239,21 @@ export class Easybeam implements EasybeamService {
 
     const response = await this.sendRequest(url, "POST", params);
     const data = await response.json();
-    return data as PortalResponse;
+    return data as ChatResponse;
   }
 
-  async streamPortal(
-    portalId: string,
+  async streamPrompt(
+    promptId: string,
     userId: string | undefined,
     filledVariables: FilledVariables,
     messages: ChatMessage[],
-    onNewResponse: (newMessage: PortalResponse) => void,
+    onNewResponse: (newMessage: ChatResponse) => void,
     onClose: () => void,
     onError?: (error: Error) => void
   ): Promise<void> {
     await this.streamEndpoint(
-      "portal",
-      portalId,
+      "prompt",
+      promptId,
       userId,
       filledVariables,
       messages,
@@ -263,33 +263,33 @@ export class Easybeam implements EasybeamService {
     );
   }
 
-  async getPortal(
-    portalId: string,
+  async getPrompt(
+    promptId: string,
     userId: string | undefined,
     filledVariables: FilledVariables,
     messages: ChatMessage[]
-  ): Promise<PortalResponse> {
+  ): Promise<ChatResponse> {
     return await this.getEndpoint(
-      "portal",
-      portalId,
+      "prompt",
+      promptId,
       userId,
       filledVariables,
       messages
     );
   }
 
-  async streamWorkflow(
-    workflowId: string,
+  async streamAgent(
+    agentId: string,
     userId: string | undefined,
     filledVariables: FilledVariables,
     messages: ChatMessage[],
-    onNewResponse: (newMessage: PortalResponse) => void,
+    onNewResponse: (newMessage: ChatResponse) => void,
     onClose: () => void,
     onError: (error: Error) => void
   ): Promise<void> {
     await this.streamEndpoint(
-      "workflow",
-      workflowId,
+      "agent",
+      agentId,
       userId,
       filledVariables,
       messages,
@@ -299,15 +299,15 @@ export class Easybeam implements EasybeamService {
     );
   }
 
-  async getWorkflow(
-    workflowId: string,
+  async getAgent(
+    agentId: string,
     userId: string | undefined,
     filledVariables: FilledVariables,
     messages: ChatMessage[]
-  ): Promise<PortalResponse> {
+  ): Promise<ChatResponse> {
     return await this.getEndpoint(
-      "workflow",
-      workflowId,
+      "agent",
+      agentId,
       userId,
       filledVariables,
       messages
