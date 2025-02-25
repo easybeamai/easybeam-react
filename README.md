@@ -14,6 +14,7 @@ The Easybeam SDK for React provides a seamless integration with the Easybeam AI 
 - TypeScript support for improved developer experience
 - Built-in error handling and event management
 - Secure handling of user secrets for agent interactions
+- Support for image URLs in chat messages
 
 ## Installation
 
@@ -49,6 +50,7 @@ const messages = [
     role: "USER",
     createdAt: new Date().toISOString(),
     id: "1",
+    imageURL: "https://example.com/image.jpg", // Optional image URL for the message, not supported by all models
   },
 ];
 
@@ -96,6 +98,7 @@ const messages = [
     role: "USER",
     createdAt: new Date().toISOString(),
     id: "1",
+    imageURL: "https://example.com/chart.png", // Optional image URL for the message
   },
 ];
 
@@ -160,6 +163,17 @@ interface UserSecrets {
 
 interface FilledVariables {
   [key: string]: string;
+}
+
+interface ChatMessage {
+  content: string;
+  role: ChatRole;
+  createdAt: string;
+  providerId?: string;
+  id: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  imageURL?: string; // URL to an image associated with the message
 }
 ```
 
