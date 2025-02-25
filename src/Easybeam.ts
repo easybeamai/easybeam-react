@@ -20,6 +20,7 @@ export interface ChatMessage {
   id: string;
   inputTokens?: number;
   outputTokens?: number;
+  imageURL?: string;
 }
 
 export type ChatRole = "AI" | "USER";
